@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic TTS Voice Studio</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background matching GitHub */
+            color: #c9d1d9; /* Light text color */
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex justify-center">
+
+    <!-- Main Container -->
+    <div id="app-container" class="w-full max-w-4xl space-y-8">
+        <header class="text-center">
+            <h1 class="text-4xl font-extrabold text-[#58a6ff] tracking-tight">
+                Realistic Voice Studio
+            </h1>
+            <p class="mt-2 text-lg text-gray-400">
+                Generate studio-grade audio and continue scripts with AI.
+            </p>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="grid grid-cols-1 lg:col-span-3 lg:grid-cols-3 gap-6">
+
+            <!-- Control Panel (Left/Top) -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Input Text Area -->
+                <div class="bg-[#161b22] p-6 rounded-xl shadow-lg border border-[#30363d]">
+                    <label for="scriptText" class="block text-xl font-semibold mb-3 text-white">Script Text</label>
+                    <textarea id="scriptText" rows="6" placeholder="Type your script here, or start a conversation like: Jane: Hello! John: Hi, Jane!"
+                        class="w-full p-3 bg-[#0d1117] border border-[#30363d] rounded-lg focus:ring-[#58a6ff] focus:border-[#58a6ff] text-white resize-none"></textarea>
+                    <p id="charCount" class="text-sm mt-1 text-gray-400 text-right">0 characters</p>
+                </div>
+
+                <!-- Voice Selection and Controls -->
+                <div class="bg-[#161b22] p-6 rounded-xl shadow-lg border border-[#30363d] space-y-4">
+                    <h2 class="text-xl font-semibold text-white">Voice & Language Settings</h2>
+
+                    <!-- Voice Dropdown -->
+                    <div>
+                        <label for="voiceSelect" class="block text-sm font-medium mb-1 text-gray-400">Select Voice</label>
+                        <select id="voiceSelect" class="w-full p-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-white focus:ring-[#58a6ff] focus:border-[#58a6ff]">
+                            <!-- Voices dynamically populated -->
+                        </select>
+                    </div>
+                    
+                    <!-- Language Dropdown -->
+                    <div>
+                        <label for="languageSelect" class="block text-sm font-medium mb-1 text-gray-400">Target Language (Auto-detected if English is not selected)</label>
+                        <select id="languageSelect" class="w-full p-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-white focus:ring-[#58a6ff] focus:border-[#58a6ff]">
+                            <!-- Languages dynamically populated -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="generateButton" onclick="window.generateAudio()"
+                        class="w-full py-3 px-4 rounded-xl font-bold transition duration-300 transform shadow-xl
+                        bg-[#58a6ff] text-[#0d1117] hover:bg-[#79c0ff] hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-[#58a6ff] focus:ring-opacity-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a2.5 2.5 0 010 3.536l-3.536 3.536a2.5 2.5 0 01-3.536 0L5.464 12c-1.562-1.562-1.562-4.09 0-5.652 1.562-1.562 4.09-1.562 5.652 0l3.536 3.536a2.5 2.5 0 003.536 0V8.464z"></path></svg>
+                        Generate Audio
+                    </button>
+                    <button id="aiContinueButton" onclick="window.continueScript()"
+                        class="w-full py-3 px-4 rounded-xl font-bold transition duration-300 transform shadow-xl
+                        bg-[#a371f7] text-white hover:bg-[#b58eff] hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-[#a371f7] focus:ring-opacity-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.882a4.486 4.486 0 00-4.664-4.664v.054A4.486 4.486 0 0015.882 9.813h-.054A4.486 4.486 0 009.813 15.882z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"></path></svg>
+                        ✨ Continue Script with AI
+                    </button>
+                </div>
+                
+                <!-- Status/Audio Player -->
+                <div id="statusArea" class="p-4 bg-[#21262d] rounded-xl border border-[#30363d] text-center">
+                    <p id="statusMessage" class="text-sm text-gray-400">Ready to synthesize voice.</p>
+                    <div id="audioPlayerContainer" class="mt-3 hidden justify-center">
+                        <audio id="audioPlayer" controls class="w-full max-w-lg rounded-lg"></audio>
+                    </div>
+                    <p id="latencyTip" class="text-xs mt-2 text-yellow-400 hidden">Tip: Generation takes 5-15 seconds. Keep scripts concise for faster results.</p>
+                </div>
+            </div>
+
+            <!-- History/Log Panel (Right/Bottom) -->
+            <div class="lg:col-span-1 space-y-4">
+                <h2 class="text-xl font-semibold text-white border-b border-[#30363d] pb-2">Recent Generations Log</h2>
+                <div id="historyLog" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                    <p class="text-gray-500 text-sm italic text-center p-4 bg-[#161b22] rounded-lg">
+                        History is local and will be lost if you close this tab.
+                    </p>
+                    <!-- Log entries will be added here -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal Dialog for confirmation/errors -->
+        <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
+            <div id="modalDialog" class="bg-[#161b22] p-6 rounded-xl shadow-2xl border border-[#30363d] w-full max-w-md space-y-4">
+                <h3 id="modalTitle" class="text-xl font-bold text-white">Message</h3>
+                <p id="modalMessage" class="text-gray-300"></p>
+                <div class="flex justify-end space-x-3">
+                    <button id="modalCloseButton" class="py-2 px-4 rounded-lg bg-[#30363d] text-white hover:bg-[#444c56] transition duration-200">Close</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Module -->
+    <script type="text/javascript">
+        // --- API KEY CONFIGURATION ---
+        // CRITICAL ACTION: If you are running this on a live GitHub Pages site, 
+        // you MUST replace the empty string below with your actual Gemini API Key 
+        // to avoid the 403 Permission Denied error.
+        const apiKey = ""; // <--- REPLACE THIS EMPTY STRING WITH YOUR KEY
+        // -----------------------------
+        
+        const modelTTS = "gemini-2.5-flash-preview-tts";
+        const modelLLM = "gemini-2.5-flash-preview-05-20";
+
+        // --- Configuration Data ---
+
+        // Helper function to convert base64 to ArrayBuffer
+        const base64ToArrayBuffer = (base64) => {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        };
+
+        // Helper function to convert PCM audio data into a WAV file blob
+        const pcmToWav = (pcm16, sampleRate) => {
+            const numChannels = 1;
+            const bytesPerSample = 2;
+            const blockAlign = numChannels * bytesPerSample;
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = pcm16.length * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            let offset = 0;
+
+            // RIFF chunk
+            view.setUint32(offset, 0x52494646, false); // "RIFF"
+            offset += 4;
+            view.setUint32(offset, 36 + dataSize, true); // ChunkSize
+            offset += 4;
+            view.setUint32(offset, 0x57415645, false); // "WAVE"
+            offset += 4;
+
+            // fmt chunk
+            view.setUint32(offset, 0x666d7420, false); // "fmt "
+            offset += 4;
+            view.setUint32(offset, 16, true); // Subchunk1Size (16 for PCM)
+            offset += 4;
+            view.setUint16(offset, 1, true); // AudioFormat (1 for PCM)
+            offset += 2;
+            view.setUint16(offset, numChannels, true); // NumChannels
+            offset += 2;
+            view.setUint32(offset, sampleRate, true); // SampleRate
+            offset += 4;
+            view.setUint32(offset, byteRate, true); // ByteRate
+            offset += 4;
+            view.setUint16(offset, blockAlign, true); // BlockAlign
+            offset += 2;
+            view.setUint16(offset, 16, true); // BitsPerSample (16-bit PCM)
+            offset += 2;
+
+            // data chunk
+            view.setUint32(offset, 0x64617461, false); // "data"
+            offset += 4;
+            view.setUint32(offset, dataSize, true); // DataSize
+            offset += 4;
+
+            // Write PCM data
+            const pcmData = new Uint8Array(pcm16.buffer);
+            for (let i = 0; i < dataSize; i++) {
+                view.setUint8(offset + i, pcmData[i]);
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        };
+
+        // --- API CALL UTILITIES ---
+
+        /**
+         * Builds the API URL for the Gemini service.
+         * @param {string} modelName - The name of the model to call.
+         * @returns {string} The fully constructed API URL.
+         */
+        const buildApiUrl = (modelName) => {
+            const baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+            // Append API Key only if it's explicitly provided in the code
+            return apiKey ? `${baseUrl}?key=${apiKey}` : baseUrl;
+        };
+
+        /**
+         * Executes an API call with exponential backoff for retries.
+         * @param {string} url - The API endpoint URL.
+         * @param {object} payload - The request body payload.
+         * @param {number} maxRetries - Maximum number of retries.
+         * @returns {Promise<object>} The JSON response object.
+         */
+        const makeApiCallWithBackoff = async (url, payload, maxRetries = 5) => {
+            const headers = { 'Content-Type': 'application/json' };
+
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        return await response.json();
+                    }
+
+                    // For 401 Unauthorized, 429 Rate Limit, or 5xx Server Errors, retry silently
+                    if (response.status === 401 || response.status === 429 || response.status >= 500) {
+                        if (attempt === maxRetries) {
+                            throw new Error(`HTTP error! Status: ${response.status}. Response: ${await response.text()}`);
+                        }
+                        const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+
+                    // For other errors (e.g., 400 Bad Request, 403 Forbidden), throw immediately
+                    throw new Error(`HTTP error! Status: ${response.status}. Response: ${await response.text()}`);
+
+                } catch (error) {
+                    if (attempt === maxRetries) {
+                        throw error;
+                    }
+                    const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+            throw new Error("Exhausted all retries.");
+        };
+
+        // --- UI & STATE MANAGEMENT ---
+
+        let isProcessing = false;
+
+        const uiElements = {
+            scriptText: document.getElementById('scriptText'),
+            voiceSelect: document.getElementById('voiceSelect'),
+            languageSelect: document.getElementById('languageSelect'),
+            generateButton: document.getElementById('generateButton'),
+            aiContinueButton: document.getElementById('aiContinueButton'),
+            statusMessage: document.getElementById('statusMessage'),
+            audioPlayerContainer: document.getElementById('audioPlayerContainer'),
+            audioPlayer: document.getElementById('audioPlayer'),
+            historyLog: document.getElementById('historyLog'),
+            latencyTip: document.getElementById('latencyTip'),
+            charCount: document.getElementById('charCount')
+        };
+
+        const VOICES = [
+            { name: "Kore (Firm)", voiceName: "Kore", speaker: "Joe" },
+            { name: "Puck (Upbeat)", voiceName: "Puck", speaker: "Jane" },
+            { name: "Charon (Informative)", voiceName: "Charon", speaker: "Speaker 3" },
+            { name: "Zephyr (Bright)", voiceName: "Zephyr", speaker: "Speaker 4" },
+            { name: "Leda (Youthful)", voiceName: "Leda", speaker: "Speaker 5" },
+            { name: "Fenrir (Excitable)", voiceName: "Fenrir", speaker: "Speaker 6" },
+        ];
+
+        const LANGUAGES = [
+            { code: "en-US", name: "English (US) - Default" },
+            { code: "de-DE", name: "German" },
+            { code: "es-US", name: "Spanish (US)" },
+            { code: "fr-FR", name: "French" },
+            { code: "it-IT", name: "Italian" },
+            { code: "ja-JP", name: "Japanese" },
+            { code: "ko-KR", name: "Korean" },
+            { code: "pt-BR", name: "Portuguese (Brazil)" },
+            { code: "ru-RU", name: "Russian" },
+            { code: "hi-IN", name: "Hindi (India)" },
+        ];
+
+        const initUI = () => {
+            // Populate Voices
+            VOICES.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = voice.voiceName;
+                option.textContent = voice.name;
+                uiElements.voiceSelect.appendChild(option);
+            });
+
+            // Populate Languages
+            LANGUAGES.forEach(lang => {
+                const option = document.createElement('option');
+                option.value = lang.code;
+                option.textContent = lang.name;
+                uiElements.languageSelect.appendChild(option);
+            });
+
+            // Set default language
+            uiElements.languageSelect.value = "en-US";
+
+            // Add event listener for character count
+            uiElements.scriptText.addEventListener('input', updateCharCount);
+            updateCharCount();
+        };
+
+        const updateCharCount = () => {
+            const count = uiElements.scriptText.value.length;
+            uiElements.charCount.textContent = `${count} characters`;
+        };
+
+        const setProcessingState = (isBusy, message = "Ready to synthesize voice.") => {
+            isProcessing = isBusy;
+            uiElements.generateButton.disabled = isBusy;
+            uiElements.aiContinueButton.disabled = isBusy;
+            uiElements.statusMessage.textContent = isBusy ? message : message;
+            uiElements.generateButton.classList.toggle('opacity-50', isBusy);
+            uiElements.aiContinueButton.classList.toggle('opacity-50', isBusy);
+
+            if (isBusy) {
+                uiElements.generateButton.innerHTML = `<svg class="animate-spin w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 0020 10V5h-.582m0 8.5h-2.182m-3.518-2.182H10.582M14.536 10.464l-3.536 3.536a2.5 2.5 0 01-3.536 0L5.464 12c-1.562-1.562-1.562-4.09 0-5.652 1.562-1.562 4.09-1.562 5.652 0l3.536 3.536a2.5 2.5 0 003.536 0V8.464z"></path></svg> Generating Audio...`;
+                uiElements.aiContinueButton.innerHTML = `<svg class="animate-spin w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.882a4.486 4.486 0 00-4.664-4.664v.054A4.486 4.486 0 0015.882 9.813h-.054A4.486 4.486 0 009.813 15.882z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"></path></svg> AI Thinking...`;
+                uiElements.latencyTip.classList.remove('hidden');
+                uiElements.audioPlayerContainer.classList.add('hidden');
+            } else {
+                uiElements.generateButton.innerHTML = `<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a2.5 2.5 0 010 3.536l-3.536 3.536a2.5 2.5 0 01-3.536 0L5.464 12c-1.562-1.562-1.562-4.09 0-5.652 1.562-1.562 4.09-1.562 5.652 0l3.536 3.536a2.5 2.5 0 003.536 0V8.464z"></path></svg> Generate Audio`;
+                uiElements.aiContinueButton.innerHTML = `<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.813 15.882a4.486 4.486 0 00-4.664-4.664v.054A4.486 4.486 0 0015.882 9.813h-.054A4.486 4.486 0 009.813 15.882z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"></path></svg> ✨ Continue Script with AI`;
+                uiElements.latencyTip.classList.add('hidden');
+            }
+        };
+
+        const showModal = (title, message) => {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+            document.getElementById('modalOverlay').classList.add('flex');
+        };
+
+        document.getElementById('modalCloseButton').onclick = () => {
+            document.getElementById('modalOverlay').classList.add('hidden');
+            document.getElementById('modalOverlay').classList.remove('flex');
+        };
+
+        // --- CORE FUNCTIONS ---
+
+        /**
+         * Parses the script text to determine if multi-speaker config is needed.
+         * @param {string} text - The input script text.
+         * @param {string} defaultVoiceName - The selected single voice.
+         * @returns {object} The speechConfig object for the API payload.
+         */
+        const getSpeechConfig = (text, defaultVoiceName) => {
+            const speakerLines = text.match(/^\s*(\w+):\s*/gm);
+            const isMultiSpeaker = speakerLines && speakerLines.length > 1;
+            const selectedVoice = VOICES.find(v => v.voiceName === defaultVoiceName);
+
+            if (isMultiSpeaker) {
+                const uniqueSpeakers = [...new Set(speakerLines.map(line => line.trim().split(':')[0]))];
+
+                // Assign voices sequentially to unique speakers
+                const speakerVoiceConfigs = uniqueSpeakers.map((speaker, index) => {
+                    // Cycle through available voices, starting with the selected one
+                    const voiceIndex = (VOICES.findIndex(v => v.voiceName === defaultVoiceName) + index) % VOICES.length;
+                    return {
+                        speaker: speaker,
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: VOICES[voiceIndex].voiceName }
+                        }
+                    };
+                });
+
+                return { multiSpeakerVoiceConfig: { speakerVoiceConfigs } };
+            } else {
+                // Single speaker config
+                return {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName: defaultVoiceName }
+                    }
+                };
+            }
+        };
+
+        window.generateAudio = async () => {
+            if (isProcessing) return;
+
+            // Check API Key
+            if (!apiKey) {
+                showModal("API Key Required", "The API Key is currently empty. Please edit the index.html file and replace the 'apiKey' variable with your actual Gemini API Key to use this feature on GitHub Pages.");
+                return;
+            }
+
+            const text = uiElements.scriptText.value.trim();
+            const defaultVoiceName = uiElements.voiceSelect.value;
+            const langCode = uiElements.languageSelect.value;
+
+            if (!text) {
+                showModal("Input Required", "Please enter the script text you want to synthesize.");
+                return;
+            }
+
+            setProcessingState(true, "Sending script to TTS model. This may take 5-15 seconds...");
+            uiElements.audioPlayerContainer.classList.add('hidden');
+
+            try {
+                const speechConfig = getSpeechConfig(text, defaultVoiceName);
+
+                // Add language code to the prompt to help the model with multilingual text
+                const languagePrompt = langCode !== 'en-US' ? ` (Synthesize this in ${langCode})` : '';
+
+                const payload = {
+                    contents: [{
+                        parts: [{ text: text + languagePrompt }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: speechConfig
+                    },
+                    model: modelTTS
+                };
+
+                const apiUrl = buildApiUrl(modelTTS);
+                const result = await makeApiCallWithBackoff(apiUrl, payload);
+
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
+                    // Extract sample rate from mimeType (e.g., audio/L16;rate=24000)
+                    const rateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    // API returns signed PCM16 audio data.
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+
+                    uiElements.audioPlayer.src = audioUrl;
+                    uiElements.audioPlayerContainer.classList.remove('hidden');
+                    setProcessingState(false, "Audio successfully generated! Press play to listen.");
+                    
+                    logGeneration(text, defaultVoiceName, audioUrl);
+
+                } else {
+                    throw new Error("Invalid audio data received from API.");
+                }
+
+            } catch (error) {
+                console.error("TTS Generation Error:", error);
+                showModal("TTS Generation Failed", `An error occurred: ${error.message}. Please ensure the API Key is correctly inserted in the code.`);
+                setProcessingState(false, "TTS Generation Error: Check console for details.");
+            }
+        };
+
+        window.continueScript = async () => {
+            if (isProcessing) return;
+
+            // Check API Key
+            if (!apiKey) {
+                showModal("API Key Required", "The API Key is currently empty. Please edit the index.html file and replace the 'apiKey' variable with your actual Gemini API Key to use this feature on GitHub Pages.");
+                return;
+            }
+
+            const text = uiElements.scriptText.value.trim();
+
+            if (!text) {
+                showModal("Input Required", "Please enter some text before asking the AI to continue the script.");
+                return;
+            }
+
+            setProcessingState(true, "AI is brainstorming the next lines of the script...");
+
+            try {
+                const systemPrompt = "You are a creative scriptwriter. Given the existing script, continue the scene with one or two concise, natural dialogue lines or narrative actions. Maintain the current tone and style. Only output the new text, nothing else. If it's a dialogue, continue the speaker pattern.";
+                const userQuery = `Continue this script based on the last line: ${text}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+
+                const apiUrl = buildApiUrl(modelLLM);
+                const result = await makeApiCallWithBackoff(apiUrl, payload);
+                const continuation = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (continuation) {
+                    // Clean up any stray markdown or quotes from the model
+                    let cleanContinuation = continuation.trim();
+                    cleanContinuation = cleanContinuation.replace(/^```[a-z]*\s*|```$/gmi, '').trim();
+
+                    uiElements.scriptText.value += "\n" + cleanContinuation;
+                    updateCharCount();
+                    setProcessingState(false, "AI script continuation added!");
+                } else {
+                    throw new Error("AI returned an empty or unparsable response.");
+                }
+
+            } catch (error) {
+                console.error("AI Continuation Failed:", error);
+                showModal("AI Continuation Failed", `An error occurred: ${error.message}. Please ensure the API Key is correctly inserted in the code.`);
+                setProcessingState(false, "AI Continuation Error. Check console for details.");
+            }
+        };
+
+        /**
+         * Adds a generated audio clip to the non-persistent log.
+         * @param {string} script - The text that was synthesized.
+         * @param {string} voiceName - The voice used.
+         * @param {string} audioUrl - The temporary Blob URL for the audio.
+         */
+        const logGeneration = (script, voiceName, audioUrl) => {
+            const time = new Date().toLocaleTimeString();
+            const voice = VOICES.find(v => v.voiceName === voiceName)?.name || voiceName;
+
+            // Create a log entry card
+            const logEntry = document.createElement('div');
+            logEntry.className = "p-4 bg-[#21262d] rounded-lg border border-[#30363d] space-y-2 shadow-md";
+            logEntry.innerHTML = `
+                <div class="flex justify-between items-center text-xs text-gray-400">
+                    <span class="font-medium text-white">${time}</span>
+                    <span class="px-2 py-0.5 rounded-full bg-gray-600 text-gray-200">${voice}</span>
+                </div>
+                <p class="text-sm text-gray-300 line-clamp-2">${script}</p>
+                <audio controls src="${audioUrl}" class="w-full rounded-lg"></audio>
+                <button onclick="window.loadScriptIntoInput('${escape(script)}')" class="mt-2 text-xs text-[#58a6ff] hover:text-[#79c0ff] transition duration-150">Load Script</button>
+            `;
+
+            // Insert at the top of the log
+            uiElements.historyLog.prepend(logEntry);
+
+            // Remove the initial 'empty' message if it exists
+            const emptyMessage = uiElements.historyLog.querySelector('.italic');
+            if (emptyMessage) {
+                uiElements.historyLog.removeChild(emptyMessage);
+            }
+        };
+        
+        /**
+         * Loads a script text from the log back into the input area.
+         * @param {string} scriptEncoded - The URI-encoded script text.
+         */
+        window.loadScriptIntoInput = (scriptEncoded) => {
+            const script = unescape(scriptEncoded);
+            uiElements.scriptText.value = script;
+            updateCharCount();
+        };
+
+        // --- Initialization ---
+        window.onload = initUI;
+
+    </script>
+</body>
+</html>
